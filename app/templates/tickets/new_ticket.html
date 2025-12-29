@@ -30,27 +30,88 @@
 
         <form method="POST" class="space-y-5">
             
-            <!-- Champ Objet -->
-            <div>
-                <label class="label-tiny">Objet de la demande</label>
-                <input type="text" name="title" class="input-field" placeholder="Ex: Problème d'écran, Achat..." required>
-            </div>
-
-            <!-- Champ Spécifique Informatique : Hostname -->
+            <!-- SÉLECTEUR DE TYPE DE DEMANDE (Visible uniquement pour INFO) -->
             {% if service_name == 'INFO' %}
             <div>
-                <label class="label-tiny">Nom de la machine (Hostname)</label>
-                <div class="relative">
-                    <input type="text" name="hostname" id="hostname" class="input-field font-mono" placeholder="DESKTOP-XXXX">
-                    <button type="button" onclick="alert('Détection auto à venir')" class="absolute right-2 top-2 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase transition">Detect</button>
-                </div>
+                <label class="label-tiny">Type de demande</label>
+                <select name="category_ticket" id="categorySelect" class="input-field cursor-pointer" onchange="toggleFormFields()">
+                    <option value="Standard">Incident / Bug Standard</option>
+                    <option value="Nouvel Utilisateur">Nouvel Utilisateur</option>
+                    <option value="Matériel">Demande de Matériel</option>
+                </select>
             </div>
+            {% else %}
+                <input type="hidden" name="category_ticket" value="Standard">
             {% endif %}
 
-            <!-- Description -->
-            <div>
-                <label class="label-tiny">Description détaillée</label>
-                <textarea name="description" rows="5" class="input-field" placeholder="Décrivez votre besoin..." required></textarea>
+            <!-- CHAMPS STANDARD (Titre/Desc) -->
+            <div id="standardFields">
+                <div>
+                    <label class="label-tiny">Objet de la demande</label>
+                    <input type="text" name="title" class="input-field" placeholder="Ex: Problème d'écran, Fuite d'eau...">
+                </div>
+                
+                <!-- Hostname (Info Only) -->
+                {% if service_name == 'INFO' %}
+                <div class="mt-4">
+                    <label class="label-tiny">Nom de la machine (Hostname)</label>
+                    <div class="relative">
+                        <input type="text" name="hostname" class="input-field font-mono" placeholder="DESKTOP-XXXX">
+                        <button type="button" class="absolute right-2 top-2 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase transition">Detect</button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- CHAMPS NOUVEL UTILISATEUR (Cachés par défaut) -->
+            <div id="newUserFields" class="hidden space-y-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-tiny text-blue-600">Nom</label>
+                        <input type="text" name="new_user_nom" class="input-field bg-white" placeholder="Nom">
+                    </div>
+                    <div>
+                        <label class="label-tiny text-blue-600">Prénom</label>
+                        <input type="text" name="new_user_prenom" class="input-field bg-white" placeholder="Prénom">
+                    </div>
+                </div>
+                <div>
+                    <label class="label-tiny text-blue-600">Service</label>
+                    <input type="text" name="new_user_service" class="input-field bg-white" placeholder="Ex: Comptabilité">
+                </div>
+                <div>
+                    <label class="label-tiny text-blue-600">Date d'arrivée</label>
+                    <input type="date" name="new_user_date" class="input-field bg-white">
+                </div>
+                <div>
+                    <label class="label-tiny text-blue-600">Accès Fichiers / Dossiers</label>
+                    <textarea name="new_user_acces" rows="2" class="input-field bg-white" placeholder="Liste des dossiers réseaux nécessaires..."></textarea>
+                </div>
+            </div>
+
+            <!-- CHAMPS DEMANDE MATERIEL (Cachés par défaut) -->
+            <div id="materielFields" class="hidden space-y-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <div>
+                    <label class="label-tiny text-emerald-600">Matériel souhaité</label>
+                    <textarea name="materiel_list" rows="3" class="input-field bg-white" placeholder="Ex: 2 Écrans 24 pouces, 1 Souris sans fil..."></textarea>
+                    <p class="text-[10px] text-emerald-600 mt-1 font-bold">* Possibilité d'en mettre plusieurs</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-tiny text-emerald-600">Destinataire</label>
+                        <input type="text" name="destinataire_materiel" class="input-field bg-white" placeholder="Pour qui ?">
+                    </div>
+                    <div>
+                        <label class="label-tiny text-emerald-600">Service</label>
+                        <input type="text" name="service_destinataire" class="input-field bg-white" placeholder="Quel service ?">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Générale (Toujours visible sauf si spécifié autrement) -->
+            <div id="descField">
+                <label class="label-tiny">Description / Détails supplémentaires</label>
+                <textarea name="description" rows="4" class="input-field" placeholder="Détails de la demande..."></textarea>
             </div>
 
             <!-- Bouton d'action -->
@@ -63,7 +124,38 @@
 
 </div>
 
-<!-- Styles extraits de votre projet original -->
+<script>
+    lucide.createIcons();
+
+    function toggleFormFields() {
+        const category = document.getElementById('categorySelect') ? document.getElementById('categorySelect').value : 'Standard';
+        
+        // IDs des sections
+        const standard = document.getElementById('standardFields');
+        const newUser = document.getElementById('newUserFields');
+        const materiel = document.getElementById('materielFields');
+        const desc = document.getElementById('descField');
+
+        // Reset
+        standard.classList.add('hidden');
+        newUser.classList.add('hidden');
+        materiel.classList.add('hidden');
+        desc.classList.remove('hidden'); // Toujours visible par défaut
+
+        if (category === 'Nouvel Utilisateur') {
+            newUser.classList.remove('hidden');
+            // On masque le titre standard car redondant, on le générera automatiquement côté serveur
+        } else if (category === 'Matériel') {
+            materiel.classList.remove('hidden');
+        } else {
+            standard.classList.remove('hidden');
+        }
+    }
+
+    // Init au chargement
+    toggleFormFields();
+</script>
+
 <style>
     .label-tiny { 
         font-size: 10px; 
@@ -78,8 +170,8 @@
         width: 100%; 
         background-color: #f8fafc; 
         border: 1px solid #e2e8f0; 
-        padding: 1rem; /* Padding ajusté pour correspondre à votre style */
-        border-radius: 0.75rem; /* rounded-xl */
+        padding: 1rem; 
+        border-radius: 0.75rem; 
         font-size: 0.875rem; 
         font-weight: 700; 
         outline: none; 
@@ -91,8 +183,4 @@
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 </style>
-
-<script>
-    lucide.createIcons();
-</script>
 {% endblock %}

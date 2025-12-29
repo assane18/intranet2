@@ -59,15 +59,36 @@
                 </div>
             </div>
             
-            <!-- Profil Utilisateur -->
+            <!-- Profil Utilisateur & Notifications -->
             <div class="flex items-center gap-4">
+                
+                <!-- Cloche Notification -->
+                <div class="relative group">
+                    <button id="notifBtn" class="p-2 hover:bg-slate-800 rounded-lg transition relative">
+                        <i data-lucide="bell" class="w-5 h-5 text-slate-300 group-hover:text-white"></i>
+                        <span id="notifBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900"></span>
+                    </button>
+                    
+                    <!-- Dropdown Notifications -->
+                    <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 origin-top-right transition-all">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="text-xs font-black uppercase text-slate-500 tracking-widest">Notifications</h3>
+                            <button onclick="markAllRead()" class="text-[10px] font-bold text-blue-600 hover:underline">Tout marquer comme lu</button>
+                        </div>
+                        <div id="notifList" class="max-h-64 overflow-y-auto">
+                            <div class="p-4 text-center text-slate-400 text-xs italic">Chargement...</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-right hidden sm:block">
                     <p class="text-xs font-bold text-white">{{ current_user.fullname }}</p>
                     <p class="text-[10px] text-slate-400 uppercase font-bold">{{ current_user.role }}</p>
                 </div>
                 
+                <!-- Lien Admin (Corrigé pour pointer vers la liste des users) -->
                 {% if 'ADMIN' in current_user.role|string %}
-                <a href="{{ url_for('main.admin_dashboard') }}" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg transition" title="Admin">
+                <a href="{{ url_for('users.list_users') }}" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg transition" title="Gestion Utilisateurs">
                     <i data-lucide="users" class="w-4 h-4"></i>
                 </a>
                 {% endif %}
@@ -101,6 +122,96 @@
 
     <script>
         lucide.createIcons();
+
+        // Gestion Notifications
+        const notifBtn = document.getElementById('notifBtn');
+        const notifDropdown = document.getElementById('notifDropdown');
+        const notifBadge = document.getElementById('notifBadge');
+        const notifList = document.getElementById('notifList');
+
+        if (notifBtn) {
+            notifBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notifDropdown.classList.toggle('hidden');
+                if (!notifDropdown.classList.contains('hidden')) {
+                    fetchNotifications();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!notifDropdown.classList.contains('hidden') && !notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                    notifDropdown.classList.add('hidden');
+                }
+            });
+
+            setInterval(checkNotificationCount, 30000);
+            checkNotificationCount();
+        }
+
+        async function checkNotificationCount() {
+            try {
+                const res = await fetch('/api/notifications');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.count > 0) {
+                    notifBadge.classList.remove('hidden');
+                    notifBadge.innerText = data.count > 9 ? '9+' : data.count;
+                } else {
+                    notifBadge.classList.add('hidden');
+                }
+            } catch (e) { console.error("Erreur polling notif", e); }
+        }
+
+        async function fetchNotifications() {
+            try {
+                notifList.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs italic">Chargement...</div>';
+                const res = await fetch('/api/notifications');
+                const data = await res.json();
+                notifList.innerHTML = '';
+
+                if (data.notifications.length === 0) {
+                    notifList.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs italic">Aucune nouvelle notification.</div>';
+                    return;
+                }
+
+                data.notifications.forEach(n => {
+                    const item = document.createElement('div');
+                    item.className = 'p-3 border-b border-slate-50 hover:bg-slate-50 transition cursor-pointer';
+                    
+                    let colorClass = 'bg-blue-500';
+                    if (n.category === 'success') colorClass = 'bg-green-500';
+                    if (n.category === 'warning' || n.category === 'danger') colorClass = 'bg-red-500';
+
+                    item.innerHTML = `
+                        <div class="flex gap-3 items-start">
+                            <div class="w-2 h-2 mt-1.5 rounded-full ${colorClass}"></div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-700 leading-tight">${n.message}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">${new Date(n.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            </div>
+                        </div>
+                    `;
+                    item.onclick = () => {
+                        markRead(n.id);
+                        if (n.link) window.location.href = n.link;
+                    };
+                    notifList.appendChild(item);
+                });
+            } catch (e) {
+                notifList.innerHTML = '<div class="p-4 text-center text-red-400 text-xs">Erreur de chargement.</div>';
+            }
+        }
+
+        async function markRead(id) {
+            await fetch(`/api/notifications/read/${id}`, { method: 'POST' });
+            checkNotificationCount();
+        }
+
+        async function markAllRead() {
+            await fetch('/api/notifications/read_all', { method: 'POST' });
+            checkNotificationCount();
+            notifDropdown.classList.add('hidden');
+        }
     </script>
 </body>
 </html>

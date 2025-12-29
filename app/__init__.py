@@ -43,4 +43,11 @@ def create_app(config_name='default'):
     from .routes.prets import prets_bp
     app.register_blueprint(prets_bp)
 
+    # NOUVEAU : Module Users
+    from .routes.users import users_bp
+    app.register_blueprint(users_bp)
+
+    from .routes.api import api_bp
+    app.register_blueprint(api_bp)
+
     return app

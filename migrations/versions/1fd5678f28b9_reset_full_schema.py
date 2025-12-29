@@ -1,8 +1,8 @@
 """Reset Full Schema
 
-Revision ID: 19396cfab8e6
+Revision ID: 1fd5678f28b9
 Revises: 
-Create Date: 2025-12-29 12:53:20.051540
+Create Date: 2025-12-29 15:00:59.921388
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '19396cfab8e6'
+revision = '1fd5678f28b9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -41,6 +41,17 @@ def upgrade():
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_users_username'), ['username'], unique=True)
 
+    op.create_table('notifications',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('message', sa.String(length=255), nullable=False),
+    sa.Column('category', sa.String(length=20), nullable=True),
+    sa.Column('link', sa.String(length=255), nullable=True),
+    sa.Column('is_read', sa.Boolean(), nullable=True),
+    sa.Column('timestamp', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('prets',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('materiel_id', sa.Integer(), nullable=True),
@@ -52,6 +63,14 @@ def upgrade():
     sa.Column('date_retour_prevue', sa.DateTime(), nullable=True),
     sa.Column('date_retour_reelle', sa.DateTime(), nullable=True),
     sa.Column('statut_dossier', sa.String(length=20), nullable=True),
+    sa.Column('type_pret', sa.String(length=50), nullable=True),
+    sa.Column('accessoires', sa.String(length=255), nullable=True),
+    sa.Column('etat_ecran_sortie', sa.String(length=50), nullable=True),
+    sa.Column('etat_clavier_sortie', sa.String(length=50), nullable=True),
+    sa.Column('etat_coque_sortie', sa.String(length=50), nullable=True),
+    sa.Column('etat_ecran_retour', sa.String(length=50), nullable=True),
+    sa.Column('etat_clavier_retour', sa.String(length=50), nullable=True),
+    sa.Column('etat_coque_retour', sa.String(length=50), nullable=True),
     sa.ForeignKeyConstraint(['materiel_id'], ['materiels.id'], ),
     sa.ForeignKeyConstraint(['technicien_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -67,7 +86,15 @@ def upgrade():
     sa.Column('solver_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('closed_at', sa.DateTime(), nullable=True),
+    sa.Column('category_ticket', sa.String(length=50), nullable=True),
     sa.Column('hostname', sa.String(length=64), nullable=True),
+    sa.Column('new_user_fullname', sa.String(length=150), nullable=True),
+    sa.Column('new_user_service', sa.String(length=100), nullable=True),
+    sa.Column('new_user_acces', sa.String(length=255), nullable=True),
+    sa.Column('new_user_date', sa.DateTime(), nullable=True),
+    sa.Column('materiel_list', sa.Text(), nullable=True),
+    sa.Column('destinataire_materiel', sa.String(length=150), nullable=True),
+    sa.Column('service_destinataire', sa.String(length=100), nullable=True),
     sa.ForeignKeyConstraint(['author_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['solver_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -96,6 +123,7 @@ def downgrade():
 
     op.drop_table('tickets')
     op.drop_table('prets')
+    op.drop_table('notifications')
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_users_username'))
 

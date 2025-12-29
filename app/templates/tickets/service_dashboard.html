@@ -3,9 +3,10 @@
 {% block content %}
 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-140px)]">
     
-    <!-- COLONNE GAUCHE : KPI & GRAPHIQUE -->
-    <div class="lg:col-span-3 flex flex-col gap-6 overflow-y-auto pr-2 custom-scroll">
+    <!-- COLONNE GAUCHE : TOUT LE CONTENU -->
+    <div class="lg:col-span-3 flex flex-col gap-8 overflow-y-auto pr-2 custom-scroll">
         
+        <!-- HEADER & BOUTONS -->
         <div class="flex justify-between items-end">
             <div>
                 <h1 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Dashboard {{ current_user.service_department.value }}</h1>
@@ -15,7 +16,6 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- BOUTON "PORTAIL" (Pour faire une demande à un autre service) -->
                 <a href="{{ url_for('main.user_portal') }}" class="bg-slate-900 hover:bg-slate-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg flex items-center gap-2 transition hover:-translate-y-1">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i> Faire une demande
                 </a>
@@ -24,62 +24,136 @@
             </div>
         </div>
 
-        <!-- KPI (Statistiques Tickets & Stock) -->
+        <!-- KPI & GRAPH -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Nouveaux Tickets -->
+            
+            <!-- Carte Graphique (Celle qui avait disparu) -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between md:col-span-1 row-span-2">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Répartition</h3>
+                <div class="relative h-40 w-full flex justify-center">
+                    <canvas id="ticketChart"></canvas>
+                </div>
+                <div class="mt-4 flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                    <span>Actifs: {{ stats.active }}</span>
+                    <span>Total: {{ stats.pending + stats.active + stats.done }}</span>
+                </div>
+            </div>
+
+            <!-- KPI À Traiter -->
             <a href="#" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-orange-300 transition">
                 <div>
                     <p class="text-3xl font-black text-slate-900">{{ stats.pending }}</p>
-                    <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-orange-600">Tickets à Traiter</p>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-orange-600">À Traiter</p>
                 </div>
                 <div class="p-3 bg-orange-100 text-orange-600 rounded-xl"><i data-lucide="inbox" class="w-6 h-6"></i></div>
             </a>
+
+            <!-- KPI En Cours -->
+            <a href="#" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-blue-300 transition">
+                <div>
+                    <p class="text-3xl font-black text-slate-900">{{ stats.active }}</p>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-blue-600">En Cours</p>
+                </div>
+                <div class="p-3 bg-blue-100 text-blue-600 rounded-xl"><i data-lucide="activity" class="w-6 h-6"></i></div>
+            </a>
             
-            <!-- SPECIFIQUE INFORMATIQUE : BOUTONS STOCK & PRETS -->
+            <!-- STOCK & PRETS (Info Only) -->
             {% if 'INFORMATIQUE' in current_user.service_department.value|upper or 'INFO' in current_user.service_department.value|upper %}
                 <a href="{{ url_for('inventaire.liste') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-emerald-300 transition">
                     <div>
-                        <p class="text-3xl font-black text-slate-900">Stock</p>
-                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-emerald-600">Gestion Inventaire</p>
+                        <p class="text-3xl font-black text-slate-900">{{ stats.stock }}</p>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-emerald-600">Stock</p>
                     </div>
                     <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl"><i data-lucide="package-check" class="w-6 h-6"></i></div>
                 </a>
                 
-                <a href="#" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-blue-300 transition" onclick="alert('Module Prêts à venir')">
+                <a href="{{ url_for('prets.liste_prets') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-blue-300 transition">
                     <div>
-                        <p class="text-3xl font-black text-slate-900">Prêts</p>
-                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-blue-600">Sorties Matériel</p>
+                        <p class="text-3xl font-black text-slate-900">{{ stats.prets }}</p>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-blue-600">Prêts</p>
                     </div>
                     <div class="p-3 bg-blue-100 text-blue-600 rounded-xl"><i data-lucide="arrow-right-left" class="w-6 h-6"></i></div>
                 </a>
+
+            <!-- Carte Historique Tickets -->
+            <a href="{{ url_for('tickets.historique_tickets') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-slate-400 transition">
+                <div>
+                    <p class="text-3xl font-black text-slate-900">{{ stats.done }}</p>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-slate-600">Historique Complet</p>
+                </div>
+                <div class="p-3 bg-slate-100 text-slate-600 rounded-xl"><i data-lucide="archive" class="w-6 h-6"></i></div>
+            </a>
+
             {% else %}
                 <!-- POUR LES AUTRES SERVICES (DAF, TECH...) -->
-                <a href="#" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-blue-300 transition">
-                    <div>
-                        <p class="text-3xl font-black text-slate-900">{{ stats.active }}</p>
-                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-blue-600">En Cours</p>
-                    </div>
-                    <div class="p-3 bg-blue-100 text-blue-600 rounded-xl"><i data-lucide="activity" class="w-6 h-6"></i></div>
-                </a>
-
-                <a href="#" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-emerald-300 transition">
+                <a href="#" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-emerald-300 transition col-span-2">
                     <div>
                         <p class="text-3xl font-black text-slate-900">{{ stats.done }}</p>
-                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-emerald-600">Clôturés</p>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-wider group-hover:text-emerald-600">Total Clôturés</p>
                     </div>
                     <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl"><i data-lucide="check-circle" class="w-6 h-6"></i></div>
                 </a>
             {% endif %}
         </div>
 
-        <!-- TABLEAU DES TICKETS À PRENDRE (POOL) -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <span class="font-black text-xs uppercase text-slate-500">File d'attente {{ current_user.service_department.value }}</span>
-                <span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-[10px] font-bold">{{ pool|length }} tickets</span>
+        <!-- --- SECTION 1 : DEMANDES UTILISATEURS (ARRIVÉES) --- -->
+        {% if pool_users %}
+        <div class="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
+            <div class="bg-blue-50 px-6 py-4 border-b border-blue-100 flex justify-between items-center">
+                <span class="font-black text-xs uppercase text-blue-700 flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4"></i> Nouveaux Utilisateurs (Arrivées)</span>
+                <span class="bg-blue-200 text-blue-800 px-2 py-1 rounded text-[10px] font-bold">{{ pool_users|length }}</span>
             </div>
             <table class="w-full text-xs text-left">
-                {% for ticket in pool %}
+                {% for ticket in pool_users %}
+                <tr class="border-b border-slate-50 hover:bg-slate-50 group">
+                    <td class="px-6 py-3 font-mono text-slate-400 font-bold">{{ ticket.uid_public }}</td>
+                    <td class="px-6 py-3">
+                        <div class="font-bold text-slate-900">{{ ticket.new_user_fullname }}</div>
+                        <div class="text-[10px] text-slate-500">Service: {{ ticket.new_user_service }}</div>
+                    </td>
+                    <td class="px-6 py-3 font-bold text-blue-600">Arrivée : {{ ticket.new_user_date.strftime('%d/%m/%Y') if ticket.new_user_date else '?' }}</td>
+                    <td class="px-6 py-3 text-right">
+                        <a href="{{ url_for('tickets.take_ticket', ticket_id=ticket.id) }}" class="inline-flex items-center gap-1 bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 text-slate-500 px-3 py-1.5 rounded-lg font-bold transition uppercase tracking-wide">Prendre</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- --- SECTION 2 : DEMANDES MATERIEL --- -->
+        {% if pool_materiel %}
+        <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden">
+            <div class="bg-emerald-50 px-6 py-4 border-b border-emerald-100 flex justify-between items-center">
+                <span class="font-black text-xs uppercase text-emerald-700 flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4"></i> Demandes de Matériel</span>
+                <span class="bg-emerald-200 text-emerald-800 px-2 py-1 rounded text-[10px] font-bold">{{ pool_materiel|length }}</span>
+            </div>
+            <table class="w-full text-xs text-left">
+                {% for ticket in pool_materiel %}
+                <tr class="border-b border-slate-50 hover:bg-slate-50 group">
+                    <td class="px-6 py-3 font-mono text-slate-400 font-bold">{{ ticket.uid_public }}</td>
+                    <td class="px-6 py-3">
+                        <div class="font-bold text-slate-900">{{ ticket.destinataire_materiel }}</div>
+                        <div class="text-[10px] text-slate-500">Service: {{ ticket.service_destinataire }}</div>
+                    </td>
+                    <td class="px-6 py-3 text-slate-600 italic truncate max-w-xs">{{ ticket.materiel_list }}</td>
+                    <td class="px-6 py-3 text-right">
+                        <a href="{{ url_for('tickets.take_ticket', ticket_id=ticket.id) }}" class="inline-flex items-center gap-1 bg-white border border-slate-200 hover:border-emerald-400 hover:text-emerald-600 text-slate-500 px-3 py-1.5 rounded-lg font-bold transition uppercase tracking-wide">Prendre</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- --- SECTION 3 : INCIDENTS / AUTRES --- -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <span class="font-black text-xs uppercase text-slate-500 flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> Incidents & Autres Demandes</span>
+                <span class="bg-slate-200 text-slate-600 px-2 py-1 rounded text-[10px] font-bold">{{ pool_standard|length }}</span>
+            </div>
+            <table class="w-full text-xs text-left">
+                {% for ticket in pool_standard %}
                 <tr class="border-b border-slate-50 hover:bg-slate-50 group">
                     <td class="px-6 py-3 font-mono text-slate-400 font-bold">{{ ticket.uid_public }}</td>
                     <td class="px-6 py-3 font-bold text-slate-800">{{ ticket.title }}</td>
@@ -91,22 +165,25 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" class="p-8 text-center text-slate-400 italic font-bold">Aucun nouveau ticket en attente.</td></tr>
+                <tr><td colspan="4" class="p-8 text-center text-slate-400 italic font-bold">Aucun incident en attente.</td></tr>
                 {% endfor %}
             </table>
         </div>
 
         <!-- TABLEAU DE MES DOSSIERS (MINE) -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <span class="font-black text-xs uppercase text-blue-600">Mes Dossiers En Cours</span>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-8">
+            <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+                <span class="font-black text-xs uppercase text-white flex items-center gap-2"><i data-lucide="user-check" class="w-4 h-4"></i> Mes Dossiers En Cours</span>
+                <span class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold">{{ mine|length }}</span>
             </div>
             <table class="w-full text-xs text-left">
                 {% for ticket in mine %}
                 <tr class="border-b border-slate-50 hover:bg-slate-50">
                     <td class="px-6 py-3 font-mono text-slate-400 font-bold">{{ ticket.uid_public }}</td>
                     <td class="px-6 py-3 font-bold text-slate-800">{{ ticket.title }}</td>
-                    <td class="px-6 py-3 text-slate-500">{{ ticket.created_at.strftime('%d/%m %H:%M') }}</td>
+                    <td class="px-6 py-3">
+                        <span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[9px] font-bold uppercase">{{ ticket.category_ticket or 'Standard' }}</span>
+                    </td>
                     <td class="px-6 py-3 text-right flex justify-end gap-2">
                         <a href="{{ url_for('tickets.view_ticket', ticket_uid=ticket.uid_public) }}" class="text-blue-600 hover:text-blue-800 font-bold uppercase">Chat</a>
                         <span class="text-slate-300">|</span>
@@ -119,10 +196,32 @@
             </table>
         </div>
 
+        <!-- HISTORIQUE (20 Derniers) -->
+        {% if history %}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-8 opacity-75 hover:opacity-100 transition">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <span class="font-black text-xs uppercase text-emerald-600 flex items-center gap-2"><i data-lucide="archive" class="w-4 h-4"></i> Historique (20 Derniers)</span>
+                <!-- Lien vers l'historique complet -->
+                <a href="{{ url_for('tickets.historique_tickets') }}" class="text-[10px] font-bold text-blue-600 hover:underline uppercase">Voir tout</a>
+            </div>
+            <table class="w-full text-xs text-left">
+                {% for ticket in history %}
+                <tr class="border-b border-slate-50 hover:bg-slate-50">
+                    <td class="px-6 py-3 font-mono text-slate-400 font-bold">{{ ticket.uid_public }}</td>
+                    <td class="px-6 py-3 font-bold text-slate-800">{{ ticket.title }}</td>
+                    <td class="px-6 py-3 text-slate-500">Clôturé le {{ ticket.closed_at.strftime('%d/%m à %H:%M') if ticket.closed_at else '?' }}</td>
+                    <td class="px-6 py-3 text-right">
+                        <a href="{{ url_for('tickets.view_ticket', ticket_uid=ticket.uid_public) }}" class="text-slate-400 hover:text-blue-600 font-bold uppercase">Revoir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
     </div>
 
-    <!-- COLONNE DROITE : CHAT D'ÉQUIPE (Inter-Techs du même service) -->
-    <!-- (Simulation visuelle pour l'instant) -->
+    <!-- COLONNE DROITE : CHAT D'ÉQUIPE -->
     <div class="lg:col-span-1 bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col h-full overflow-hidden">
         <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
             <h3 class="font-black uppercase text-xs tracking-widest flex items-center gap-2">
@@ -141,5 +240,26 @@
 <script>
     lucide.createIcons();
     setInterval(() => { const d = new Date(); document.getElementById('liveClock').innerText = d.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString(); }, 1000);
+
+    // Initialisation du Graphique
+    const ctx = document.getElementById('ticketChart').getContext('2d');
+    const ticketChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['À Traiter', 'En Cours', 'Terminés'],
+            datasets: [{
+                data: [{{ stats.pending }}, {{ stats.active }}, {{ stats.done }}],
+                backgroundColor: ['#f97316', '#2563eb', '#10b981'], // Orange, Bleu, Emerald
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            cutout: '75%'
+        }
+    });
 </script>
 {% endblock %}

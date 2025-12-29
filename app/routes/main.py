@@ -23,7 +23,7 @@ def admin_dashboard():
     if current_user.role != UserRole.ADMIN:
         return redirect(url_for('main.catdance'))
     # On réutilise le template admin_users.html s'il existe, sinon un simple texte pour tester
-    return "<h1>Espace Admin (En construction)</h1><a href='/auth/logout'>Déconnexion</a>"
+    return "<h1>Espace Admin redirect(url_for('users.list_users'))</h1><a href='/auth/logout'>Déconnexion</a>"
 
 @main_bp.route('/dashboard')
 @login_required

@@ -5,7 +5,12 @@
         <h1 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Stock Matériel</h1>
         <p class="text-slate-500 font-bold text-xs mt-1 uppercase tracking-wide">Parc informatique</p>
     </div>
-    <div class="flex gap-3">
+    <div class="flex flex-wrap gap-3">
+        <!-- BOUTON RETOUR DASHBOARD -->
+        <a href="{{ url_for('tickets.solver_dashboard') }}" class="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-3 rounded-xl font-black text-xs uppercase shadow-sm flex items-center gap-2 transition">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour
+        </a>
+
         <a href="{{ url_for('inventaire.export_stock') }}" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-black text-xs uppercase shadow-lg flex items-center gap-2">
             <i data-lucide="download"></i> Exporter
         </a>
