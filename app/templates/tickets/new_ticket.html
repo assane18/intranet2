@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex justify-center items-start min-h-[80vh] pt-10">
+
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 w-full max-w-lg relative">
+        
+        <!-- Bouton retour -->
+        <a href="{{ url_for('main.user_portal') }}" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </a>
+
+        <!-- En-tête dynamique selon le service -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 
+                {% if service_name == 'INFO' %}bg-blue-50 text-blue-600
+                {% elif service_name == 'DAF' %}bg-purple-50 text-purple-600
+                {% elif service_name == 'TECH' %}bg-orange-50 text-orange-600
+                {% else %}bg-emerald-50 text-emerald-600{% endif %}">
+                
+                {% if service_name == 'INFO' %}<i data-lucide="monitor" class="w-8 h-8"></i>
+                {% elif service_name == 'DAF' %}<i data-lucide="banknote" class="w-8 h-8"></i>
+                {% elif service_name == 'TECH' %}<i data-lucide="wrench" class="w-8 h-8"></i>
+                {% else %}<i data-lucide="package" class="w-8 h-8"></i>{% endif %}
+            </div>
+            
+            <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tight">Nouvelle Demande</h2>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Service : {{ service.value }}</p>
+        </div>
+
+        <form method="POST" class="space-y-5">
+            
+            <!-- Champ Objet -->
+            <div>
+                <label class="label-tiny">Objet de la demande</label>
+                <input type="text" name="title" class="input-field" placeholder="Ex: Problème d'écran, Achat..." required>
+            </div>
+
+            <!-- Champ Spécifique Informatique : Hostname -->
+            {% if service_name == 'INFO' %}
+            <div>
+                <label class="label-tiny">Nom de la machine (Hostname)</label>
+                <div class="relative">
+                    <input type="text" name="hostname" id="hostname" class="input-field font-mono" placeholder="DESKTOP-XXXX">
+                    <button type="button" onclick="alert('Détection auto à venir')" class="absolute right-2 top-2 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase transition">Detect</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Description -->
+            <div>
+                <label class="label-tiny">Description détaillée</label>
+                <textarea name="description" rows="5" class="input-field" placeholder="Décrivez votre besoin..." required></textarea>
+            </div>
+
+            <!-- Bouton d'action -->
+            <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-blue-600 transition shadow-lg text-xs uppercase tracking-widest mt-4">
+                Envoyer la demande
+            </button>
+
+        </form>
+    </div>
+
+</div>
+
+<!-- Styles extraits de votre projet original -->
+<style>
+    .label-tiny { 
+        font-size: 10px; 
+        font-weight: 900; 
+        text-transform: uppercase; 
+        color: #94a3b8; 
+        letter-spacing: 0.1em; 
+        margin-bottom: 6px; 
+        display: block; 
+    } 
+    .input-field { 
+        width: 100%; 
+        background-color: #f8fafc; 
+        border: 1px solid #e2e8f0; 
+        padding: 1rem; /* Padding ajusté pour correspondre à votre style */
+        border-radius: 0.75rem; /* rounded-xl */
+        font-size: 0.875rem; 
+        font-weight: 700; 
+        outline: none; 
+        transition: all 0.2s; 
+    } 
+    .input-field:focus { 
+        border-color: #3b82f6; 
+        background-color: #fff; 
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+</style>
+
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}
