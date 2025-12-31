@@ -1,8 +1,8 @@
 """Reset Full Schema
 
-Revision ID: 1fd5678f28b9
+Revision ID: faea908d11f5
 Revises: 
-Create Date: 2025-12-29 15:00:59.921388
+Create Date: 2025-12-30 10:34:50.150292
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1fd5678f28b9'
+revision = 'faea908d11f5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -75,6 +75,15 @@ def upgrade():
     sa.ForeignKeyConstraint(['technicien_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('team_messages',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('service', sa.Enum('INFO', 'DAF', 'GEN', 'TECH', 'ENLEV', name='servicetype'), nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('timestamp', sa.DateTime(), nullable=True),
+    sa.Column('author_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['author_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('tickets',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uid_public', sa.String(length=20), nullable=True),
@@ -88,6 +97,9 @@ def upgrade():
     sa.Column('closed_at', sa.DateTime(), nullable=True),
     sa.Column('category_ticket', sa.String(length=50), nullable=True),
     sa.Column('hostname', sa.String(length=64), nullable=True),
+    sa.Column('service_demandeur', sa.String(length=100), nullable=True),
+    sa.Column('tel_demandeur', sa.String(length=20), nullable=True),
+    sa.Column('lieu_installation', sa.String(length=100), nullable=True),
     sa.Column('new_user_fullname', sa.String(length=150), nullable=True),
     sa.Column('new_user_service', sa.String(length=100), nullable=True),
     sa.Column('new_user_acces', sa.String(length=255), nullable=True),
@@ -95,6 +107,14 @@ def upgrade():
     sa.Column('materiel_list', sa.Text(), nullable=True),
     sa.Column('destinataire_materiel', sa.String(length=150), nullable=True),
     sa.Column('service_destinataire', sa.String(length=100), nullable=True),
+    sa.Column('daf_lieu_livraison', sa.String(length=100), nullable=True),
+    sa.Column('daf_fournisseur_nom', sa.String(length=100), nullable=True),
+    sa.Column('daf_fournisseur_tel', sa.String(length=50), nullable=True),
+    sa.Column('daf_fournisseur_fax', sa.String(length=50), nullable=True),
+    sa.Column('daf_fournisseur_email', sa.String(length=100), nullable=True),
+    sa.Column('daf_type_prix', sa.String(length=10), nullable=True),
+    sa.Column('daf_lignes_json', sa.Text(), nullable=True),
+    sa.Column('daf_files_json', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['author_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['solver_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -122,6 +142,7 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_tickets_uid_public'))
 
     op.drop_table('tickets')
+    op.drop_table('team_messages')
     op.drop_table('prets')
     op.drop_table('notifications')
     with op.batch_alter_table('users', schema=None) as batch_op:

@@ -1,16 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex justify-center items-start min-h-[80vh] pt-10">
+<div class="flex justify-center items-start min-h-[80vh] pt-10 pb-20">
 
-    <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 w-full max-w-lg relative">
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 w-full max-w-3xl relative">
         
-        <!-- Bouton retour -->
         <a href="{{ url_for('main.user_portal') }}" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition">
             <i data-lucide="x" class="w-6 h-6"></i>
         </a>
 
-        <!-- En-tête dynamique selon le service -->
         <div class="text-center mb-8">
             <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 
                 {% if service_name == 'INFO' %}bg-blue-50 text-blue-600
@@ -28,9 +26,125 @@
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Service : {{ service.value }}</p>
         </div>
 
-        <form method="POST" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
             
-            <!-- SÉLECTEUR DE TYPE DE DEMANDE (Visible uniquement pour INFO) -->
+            <!-- CHAMPS COMMUNS -->
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="col-span-2 text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Vos Coordonnées</div>
+                <div>
+                    <label class="label-tiny">Votre Service</label>
+                    <select name="service_demandeur" class="input-field bg-white" required>
+                        <option value="" disabled selected>Choisir...</option>
+                        <option value="Accueil">Accueil</option><option value="Archipelle">Archipelle</option><option value="Cellule Parcours">Cellule Parcours</option><option value="CSD">CSD</option><option value="DAF">DAF</option><option value="DG">DG</option><option value="DRH">DRH</option><option value="EAM Draveil">EAM Draveil</option><option value="ESAT">ESAT</option><option value="Espace Loisirs">Espace Loisirs</option><option value="FH">FH</option><option value="FJ">FJ</option><option value="FV">FV</option><option value="Gite">Gite</option><option value="IME Corbeil">IME Corbeil</option><option value="Informatique">Informatique</option><option value="Magasin">Magasin</option><option value="MAS">MAS</option><option value="MAS Externat">MAS Externat</option><option value="MAS Inclusive">MAS Inclusive</option><option value="Patrimoine">Patrimoine</option><option value="Qualite">Qualite</option><option value="SACAT">SACAT</option><option value="SAMSAH">SAMSAH</option><option value="SAVIE">SAVIE</option><option value="Sécurité Incendie">Sécurité Incendie</option><option value="SESSAD Corbeil">SESSAD Corbeil</option><option value="SESSAD Créteil">SESSAD Créteil</option><option value="SESSAD TSA">SESSAD TSA</option><option value="SG">SG</option><option value="SRU">SRU</option><option value="Syndicat">Syndicat</option><option value="Technique">Technique</option><option value="TKITOI">TKITOI</option><option value="UEEA">UEEA</option><option value="UEMA">UEMA</option>                        <!-- (Liste complète services) -->
+                    </select>
+                </div>
+                <div>
+                    <label class="label-tiny">Tél / Poste</label>
+                    <input type="text" name="tel_demandeur" class="input-field bg-white" placeholder="Ex: 4052" required>
+                </div>
+            </div>
+
+            <!-- === CHAMPS SPECIFIQUES DAF (REFAIT) === -->
+            {% if service_name == 'DAF' %}
+            
+            <input type="hidden" name="category_ticket" value="Bon de Commande">
+
+            <!-- Dénomination -->
+            <div>
+                <label class="label-tiny">Dénomination du bon</label>
+                <input type="text" name="title" class="input-field" placeholder="Ex: Achat Fournitures Bureau" required>
+            </div>
+
+            <!-- Lieu de Livraison -->
+            <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                <label class="label-tiny text-purple-700 mb-2">Lieu de livraison</label>
+                <div class="flex flex-wrap gap-4 text-xs font-bold text-slate-700">
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_lieu_livraison" value="Saint-Mandé" class="accent-purple-600" required> Saint-Mandé</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_lieu_livraison" value="Corbeil" class="accent-purple-600"> Corbeil</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_lieu_livraison" value="Créteil" class="accent-purple-600"> Créteil</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_lieu_livraison" value="Draveil" class="accent-purple-600"> Draveil</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_lieu_livraison" value="Saint-Denis" class="accent-purple-600"> Saint-Denis</label>
+                </div>
+            </div>
+
+            <!-- Infos Fournisseur -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Informations sur le fournisseur</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="label-tiny">Nom</label>
+                        <input type="text" name="daf_fournisseur_nom" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="label-tiny">Téléphone</label>
+                        <input type="text" name="daf_fournisseur_tel" class="input-field">
+                    </div>
+                    <div>
+                        <label class="label-tiny">Fax</label>
+                        <input type="text" name="daf_fournisseur_fax" class="input-field">
+                    </div>
+                    <div>
+                        <label class="label-tiny">Adresse Mail</label>
+                        <input type="email" name="daf_fournisseur_email" class="input-field">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type de Prix -->
+            <div>
+                <label class="label-tiny">Les prix sont en :</label>
+                <div class="flex gap-4 text-xs font-bold text-slate-700">
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_type_prix" value="HT" class="accent-purple-600" checked> HT</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="daf_type_prix" value="TTC" class="accent-purple-600"> TTC</label>
+                </div>
+            </div>
+
+            <!-- Tableau 10 Lignes -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-xs text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="p-2 font-bold w-1/3">Dénomination</th>
+                            <th class="p-2 font-bold">Référence</th>
+                            <th class="p-2 font-bold w-16">Qté</th>
+                            <th class="p-2 font-bold w-24">P.U (€)</th>
+                            <th class="p-2 font-bold w-24">Total (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for i in range(1, 11) %}
+                        <tr>
+                            <td class="p-1"><input type="text" name="daf_designation_{{i}}" class="w-full bg-transparent outline-none p-1 placeholder-slate-300" placeholder="Ligne {{i}}"></td>
+                            <td class="p-1"><input type="text" name="daf_ref_{{i}}" class="w-full bg-transparent outline-none p-1"></td>
+                            <td class="p-1"><input type="number" name="daf_qte_{{i}}" class="w-full bg-transparent outline-none p-1 text-center" min="0" oninput="calcTotal({{i}})" id="qte_{{i}}"></td>
+                            <td class="p-1"><input type="number" step="0.01" name="daf_pu_{{i}}" class="w-full bg-transparent outline-none p-1 text-right" min="0" oninput="calcTotal({{i}})" id="pu_{{i}}"></td>
+                            <td class="p-1"><input type="text" name="daf_total_{{i}}" class="w-full bg-transparent outline-none p-1 text-right font-bold text-slate-700" readonly id="total_{{i}}"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-slate-50 border-t border-slate-200">
+                         <tr>
+                             <td colspan="4" class="p-2 text-right font-black uppercase text-xs">Total Général</td>
+                             <td class="p-2 text-right font-black text-purple-600 text-sm" id="grandTotal">0.00 €</td>
+                         </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Upload Devis (4 docs) -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-dashed">
+                <label class="label-tiny text-purple-600 mb-2 flex items-center gap-2"><i data-lucide="paperclip" class="w-3 h-3"></i> Ajout de Devis (PDF, Excel, Word)</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="file" name="devis_1" accept=".pdf,.doc,.docx,.xls,.xlsx" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                    <input type="file" name="devis_2" accept=".pdf,.doc,.docx,.xls,.xlsx" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                    <input type="file" name="devis_3" accept=".pdf,.doc,.docx,.xls,.xlsx" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                    <input type="file" name="devis_4" accept=".pdf,.doc,.docx,.xls,.xlsx" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                </div>
+            </div>
+
+            {% endif %}
+
+            <!-- SÉLECTEUR INFO (inchangé) -->
             {% if service_name == 'INFO' %}
             <div>
                 <label class="label-tiny">Type de demande</label>
@@ -40,147 +154,77 @@
                     <option value="Matériel">Demande de Matériel</option>
                 </select>
             </div>
-            {% else %}
-                <input type="hidden" name="category_ticket" value="Standard">
+            
+            <!-- CHAMPS INFO (Standard) -->
+            <div id="standardFields">
+                <div><label class="label-tiny">Objet</label><input type="text" name="title" class="input-field" placeholder="Objet..."></div>
+                <div class="mt-4"><label class="label-tiny">Machine</label><input type="text" name="hostname" class="input-field font-mono" placeholder="DESKTOP-XXXX"></div>
+            </div>
+
+            <!-- CHAMPS NOUVEL UTILISATEUR -->
+            <div id="newUserFields" class="hidden space-y-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <div class="grid grid-cols-2 gap-4"><input type="text" name="new_user_nom" class="input-field bg-white" placeholder="Nom"><input type="text" name="new_user_prenom" class="input-field bg-white" placeholder="Prénom"></div>
+                <div class="grid grid-cols-2 gap-4"><div><label class="label-tiny text-blue-600">Service Dest.</label><input type="text" name="new_user_service" class="input-field bg-white"></div><div><label class="label-tiny text-blue-600">Lieu</label><input type="text" name="lieu_installation_user" class="input-field bg-white"></div></div>
+                <div><label class="label-tiny text-blue-600">Date</label><input type="date" name="new_user_date" class="input-field bg-white"></div>
+                <textarea name="new_user_acces" rows="2" class="input-field bg-white" placeholder="Accès..."></textarea>
+            </div>
+
+            <!-- CHAMPS MATERIEL INFO -->
+            <div id="materielFields" class="hidden space-y-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <textarea name="materiel_list" rows="3" class="input-field bg-white" placeholder="Liste matériel..."></textarea>
+                <div class="grid grid-cols-2 gap-4"><input type="text" name="destinataire_materiel" class="input-field bg-white" placeholder="Pour qui ?"><input type="text" name="service_destinataire" class="input-field bg-white" placeholder="Service ?"></div>
+                <div><label class="label-tiny text-emerald-600">Lieu</label><input type="text" name="lieu_installation_mat" class="input-field bg-white"></div>
+            </div>
             {% endif %}
 
-            <!-- CHAMPS STANDARD (Titre/Desc) -->
-            <div id="standardFields">
-                <div>
-                    <label class="label-tiny">Objet de la demande</label>
-                    <input type="text" name="title" class="input-field" placeholder="Ex: Problème d'écran, Fuite d'eau...">
-                </div>
-                
-                <!-- Hostname (Info Only) -->
-                {% if service_name == 'INFO' %}
-                <div class="mt-4">
-                    <label class="label-tiny">Nom de la machine (Hostname)</label>
-                    <div class="relative">
-                        <input type="text" name="hostname" class="input-field font-mono" placeholder="DESKTOP-XXXX">
-                        <button type="button" class="absolute right-2 top-2 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase transition">Detect</button>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- CHAMPS NOUVEL UTILISATEUR (Cachés par défaut) -->
-            <div id="newUserFields" class="hidden space-y-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="label-tiny text-blue-600">Nom</label>
-                        <input type="text" name="new_user_nom" class="input-field bg-white" placeholder="Nom">
-                    </div>
-                    <div>
-                        <label class="label-tiny text-blue-600">Prénom</label>
-                        <input type="text" name="new_user_prenom" class="input-field bg-white" placeholder="Prénom">
-                    </div>
-                </div>
-                <div>
-                    <label class="label-tiny text-blue-600">Service</label>
-                    <input type="text" name="new_user_service" class="input-field bg-white" placeholder="Ex: Comptabilité">
-                </div>
-                <div>
-                    <label class="label-tiny text-blue-600">Date d'arrivée</label>
-                    <input type="date" name="new_user_date" class="input-field bg-white">
-                </div>
-                <div>
-                    <label class="label-tiny text-blue-600">Accès Fichiers / Dossiers</label>
-                    <textarea name="new_user_acces" rows="2" class="input-field bg-white" placeholder="Liste des dossiers réseaux nécessaires..."></textarea>
-                </div>
-            </div>
-
-            <!-- CHAMPS DEMANDE MATERIEL (Cachés par défaut) -->
-            <div id="materielFields" class="hidden space-y-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                <div>
-                    <label class="label-tiny text-emerald-600">Matériel souhaité</label>
-                    <textarea name="materiel_list" rows="3" class="input-field bg-white" placeholder="Ex: 2 Écrans 24 pouces, 1 Souris sans fil..."></textarea>
-                    <p class="text-[10px] text-emerald-600 mt-1 font-bold">* Possibilité d'en mettre plusieurs</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="label-tiny text-emerald-600">Destinataire</label>
-                        <input type="text" name="destinataire_materiel" class="input-field bg-white" placeholder="Pour qui ?">
-                    </div>
-                    <div>
-                        <label class="label-tiny text-emerald-600">Service</label>
-                        <input type="text" name="service_destinataire" class="input-field bg-white" placeholder="Quel service ?">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Description Générale (Toujours visible sauf si spécifié autrement) -->
+            <!-- Description (Commentaire) -->
             <div id="descField">
-                <label class="label-tiny">Description / Détails supplémentaires</label>
-                <textarea name="description" rows="4" class="input-field" placeholder="Détails de la demande..."></textarea>
+                <label class="label-tiny">Commentaire / Description</label>
+                <textarea name="description" rows="4" class="input-field" placeholder="Précisions..." required></textarea>
             </div>
 
-            <!-- Bouton d'action -->
             <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-blue-600 transition shadow-lg text-xs uppercase tracking-widest mt-4">
-                Envoyer la demande
+                Envoyer
             </button>
-
         </form>
     </div>
-
 </div>
 
 <script>
     lucide.createIcons();
-
+    
     function toggleFormFields() {
         const category = document.getElementById('categorySelect') ? document.getElementById('categorySelect').value : 'Standard';
-        
-        // IDs des sections
         const standard = document.getElementById('standardFields');
         const newUser = document.getElementById('newUserFields');
         const materiel = document.getElementById('materielFields');
-        const desc = document.getElementById('descField');
-
-        // Reset
-        standard.classList.add('hidden');
-        newUser.classList.add('hidden');
-        materiel.classList.add('hidden');
-        desc.classList.remove('hidden'); // Toujours visible par défaut
-
-        if (category === 'Nouvel Utilisateur') {
-            newUser.classList.remove('hidden');
-            // On masque le titre standard car redondant, on le générera automatiquement côté serveur
-        } else if (category === 'Matériel') {
-            materiel.classList.remove('hidden');
-        } else {
-            standard.classList.remove('hidden');
+        if(standard) {
+            standard.classList.add('hidden'); newUser.classList.add('hidden'); materiel.classList.add('hidden');
+            if (category === 'Nouvel Utilisateur') newUser.classList.remove('hidden');
+            else if (category === 'Matériel') materiel.classList.remove('hidden');
+            else standard.classList.remove('hidden');
         }
     }
-
-    // Init au chargement
     toggleFormFields();
+
+    // Calcul automatique du tableau DAF
+    function calcTotal(i) {
+        const qte = parseFloat(document.getElementById('qte_' + i).value) || 0;
+        const pu = parseFloat(document.getElementById('pu_' + i).value) || 0;
+        const total = qte * pu;
+        document.getElementById('total_' + i).value = total.toFixed(2);
+        
+        let grandTotal = 0;
+        for(let j=1; j<=10; j++) {
+            grandTotal += parseFloat(document.getElementById('total_' + j).value) || 0;
+        }
+        document.getElementById('grandTotal').innerText = grandTotal.toFixed(2) + ' €';
+    }
 </script>
 
 <style>
-    .label-tiny { 
-        font-size: 10px; 
-        font-weight: 900; 
-        text-transform: uppercase; 
-        color: #94a3b8; 
-        letter-spacing: 0.1em; 
-        margin-bottom: 6px; 
-        display: block; 
-    } 
-    .input-field { 
-        width: 100%; 
-        background-color: #f8fafc; 
-        border: 1px solid #e2e8f0; 
-        padding: 1rem; 
-        border-radius: 0.75rem; 
-        font-size: 0.875rem; 
-        font-weight: 700; 
-        outline: none; 
-        transition: all 0.2s; 
-    } 
-    .input-field:focus { 
-        border-color: #3b82f6; 
-        background-color: #fff; 
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
+    .label-tiny { font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.1em; margin-bottom: 6px; display: block; } 
+    .input-field { width: 100%; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 700; outline: none; transition: all 0.2s; } 
+    .input-field:focus { border-color: #3b82f6; background-color: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 </style>
 {% endblock %}

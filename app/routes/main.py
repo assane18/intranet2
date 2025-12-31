@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, current_user
-from app.models import UserRole
+from app.models import UserRole, Ticket
 
 main_bp = Blueprint('main', __name__)
 
@@ -13,27 +13,36 @@ def index():
 @main_bp.route('/portal')
 @login_required
 def user_portal():
-    # C'est la page d'accueil des utilisateurs (Le menu avec les 4 cartes)
-    return render_template('portal.html', user=current_user)
+    # Récupérer les 15 derniers tickets de l'utilisateur connecté
+    recent_tickets = Ticket.query.filter_by(author_id=current_user.id)\
+                                 .order_by(Ticket.created_at.desc())\
+                                 .limit(15).all()
+    
+    return render_template('portal.html', user=current_user, tickets=recent_tickets)
+
+@main_bp.route('/my_history')
+@login_required
+def my_history():
+    # Historique complet
+    tickets = Ticket.query.filter_by(author_id=current_user.id).order_by(Ticket.created_at.desc()).all()
+    return render_template('my_history.html', tickets=tickets)
 
 @main_bp.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    # Protection : Seul l'admin peut voir ça
-    if current_user.role != UserRole.ADMIN:
+    if 'ADMIN' not in str(current_user.role).upper():
         return redirect(url_for('main.catdance'))
-    # On réutilise le template admin_users.html s'il existe, sinon un simple texte pour tester
-    return "<h1>Espace Admin redirect(url_for('users.list_users'))</h1><a href='/auth/logout'>Déconnexion</a>"
+    return redirect(url_for('users.list_users'))
 
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():
-    # Aiguillage intelligent selon le rôle
-    if current_user.role == UserRole.ADMIN:
-        return redirect(url_for('main.admin_dashboard'))
-    elif current_user.role == UserRole.MANAGER:
+    role = str(current_user.role).upper()
+    if 'ADMIN' in role:
+        return redirect(url_for('tickets.solver_dashboard'))
+    elif 'MANAGER' in role:
         return redirect(url_for('tickets.manager_dashboard'))
-    elif current_user.role == UserRole.SOLVER:
+    elif 'SOLVER' in role:
         return redirect(url_for('tickets.solver_dashboard'))
     else:
         return redirect(url_for('main.user_portal'))

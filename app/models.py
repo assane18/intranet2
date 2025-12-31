@@ -2,6 +2,7 @@ from . import db
 from flask_login import UserMixin
 from datetime import datetime
 import enum
+import json
 
 # --- ÉNUMÉRATIONS ---
 class UserRole(str, enum.Enum):
@@ -25,7 +26,7 @@ class ServiceType(str, enum.Enum):
     TECH = "TECHNIQUE"
     ENLEV = "ENLEVEMENT"
 
-# --- MODÈLES UTILISATEURS & TICKETS ---
+# --- MODÈLES ---
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,8 +52,6 @@ class Ticket(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     author = db.relationship('User', foreign_keys=[author_id], backref='my_tickets')
     target_service = db.Column(db.Enum(ServiceType), nullable=False)
-    
-    # Workflow
     status = db.Column(db.Enum(TicketStatus), default=TicketStatus.VALIDATION)
     solver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     solver = db.relationship('User', foreign_keys=[solver_id], backref='assigned_tickets')
@@ -60,20 +59,52 @@ class Ticket(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     closed_at = db.Column(db.DateTime, nullable=True)
     
-    # --- CHAMPS SPÉCIFIQUES V2 (Nouveaux) ---
-    category_ticket = db.Column(db.String(50)) # "Standard", "Nouvel Utilisateur", "Matériel"
-    hostname = db.Column(db.String(64), nullable=True) # Pour incidents classiques
+    category_ticket = db.Column(db.String(50)) 
+    hostname = db.Column(db.String(64), nullable=True)
     
-    # Pour "Nouvel Utilisateur"
+    # Contact
+    service_demandeur = db.Column(db.String(100), nullable=True)
+    tel_demandeur = db.Column(db.String(20), nullable=True)
+    lieu_installation = db.Column(db.String(100), nullable=True)
+
+    # Info : Nouvel Utilisateur
     new_user_fullname = db.Column(db.String(150), nullable=True)
     new_user_service = db.Column(db.String(100), nullable=True)
-    new_user_acces = db.Column(db.String(255), nullable=True) # Accès fichiers/dossiers
+    new_user_acces = db.Column(db.String(255), nullable=True)
     new_user_date = db.Column(db.DateTime, nullable=True)
     
-    # Pour "Demande Matériel"
-    materiel_list = db.Column(db.Text, nullable=True) # Liste du matériel
+    # Info : Demande Matériel
+    materiel_list = db.Column(db.Text, nullable=True)
     destinataire_materiel = db.Column(db.String(150), nullable=True)
     service_destinataire = db.Column(db.String(100), nullable=True)
+
+    # --- NOUVEAUX CHAMPS DAF COMPLETS ---
+    daf_lieu_livraison = db.Column(db.String(100)) # Saint-Mandé, Corbeil...
+    
+    # Infos Fournisseur
+    daf_fournisseur_nom = db.Column(db.String(100))
+    daf_fournisseur_tel = db.Column(db.String(50))
+    daf_fournisseur_fax = db.Column(db.String(50))
+    daf_fournisseur_email = db.Column(db.String(100))
+    
+    daf_type_prix = db.Column(db.String(10)) # HT ou TTC
+    
+    # Stockage du tableau (JSON text)
+    daf_lignes_json = db.Column(db.Text) 
+    
+    # Stockage des fichiers (JSON text : liste des chemins)
+    daf_files_json = db.Column(db.Text)
+
+    # Méthodes utilitaires pour récupérer les données JSON
+    def get_daf_lignes(self):
+        if self.daf_lignes_json:
+            return json.loads(self.daf_lignes_json)
+        return []
+
+    def get_daf_files(self):
+        if self.daf_files_json:
+            return json.loads(self.daf_files_json)
+        return []
 
 class TicketMessage(db.Model):
     __tablename__ = 'ticket_messages'
@@ -85,7 +116,18 @@ class TicketMessage(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     author = db.relationship('User')
 
-# --- MODÈLES INVENTAIRE ---
+class TeamMessage(db.Model):
+    __tablename__ = 'team_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    service = db.Column(db.Enum(ServiceType), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    author = db.relationship('User')
+    def to_dict(self):
+        return {'id': self.id, 'user': self.author.fullname, 'content': self.content, 'timestamp': self.timestamp.isoformat(), 'is_me': False}
+
+# --- MODÈLES INVENTAIRE & PRETS ---
 class Materiel(db.Model):
     __tablename__ = 'materiels'
     id = db.Column(db.Integer, primary_key=True)
@@ -128,13 +170,5 @@ class Notification(db.Model):
     link = db.Column(db.String(255))
     is_read = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
     def to_dict(self):
-        return {
-            'id': self.id,
-            'message': self.message,
-            'category': self.category,
-            'link': self.link,
-            'is_read': self.is_read,
-            'timestamp': self.timestamp.isoformat()
-        }
+        return {'id': self.id, 'message': self.message, 'category': self.category, 'link': self.link, 'is_read': self.is_read, 'timestamp': self.timestamp.isoformat()}

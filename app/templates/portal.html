@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portail Intranet</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Icônes Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
@@ -16,7 +15,6 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-    <!-- Navbar (Style V1) -->
     <nav class="bg-slate-900 text-white sticky top-0 z-50 border-b border-slate-800">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-8">
@@ -34,16 +32,14 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-6 py-12">
         
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="mb-8 p-4 rounded-xl flex items-center gap-3 shadow-sm border font-bold text-sm
-                        {% if category == 'success' %}bg-d1fae5 border-green-200 text-green-700
-                        {% elif category == 'danger' %}bg-fee2e2 border-red-200 text-red-700
+                        {% if category == 'success' %}bg-green-50 border-green-200 text-green-700
+                        {% elif category == 'danger' %}bg-red-50 border-red-200 text-red-700
                         {% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %}">
                         <i data-lucide="info" class="w-5 h-5"></i>
                         <span>{{ message }}</span>
@@ -58,8 +54,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-            <!-- Service INFORMATIQUE (LIEN ACTIVÉ) -->
             <a href="{{ url_for('tickets.new_ticket', service_name='INFO') }}" class="card-service group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 cursor-pointer block">
                 <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
                     <i data-lucide="monitor" class="w-7 h-7"></i>
@@ -68,7 +62,6 @@
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Matériel, Logiciels, Bugs</p>
             </a>
 
-            <!-- Service DAF (LIEN ACTIVÉ) -->
             <a href="{{ url_for('tickets.new_ticket', service_name='DAF') }}" class="card-service group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-purple-300 cursor-pointer block">
                 <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
                     <i data-lucide="banknote" class="w-7 h-7"></i>
@@ -77,31 +70,28 @@
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Achats, Notes de frais</p>
             </a>
 
-            <!-- Service TECHNIQUE (LIEN ACTIVÉ) -->
             <a href="{{ url_for('tickets.new_ticket', service_name='TECH') }}" class="card-service group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-orange-300 cursor-pointer block">
                 <div class="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
                     <i data-lucide="wrench" class="w-7 h-7"></i>
                 </div>
-                <h3 class="font-black text-lg text-slate-900 uppercase mb-2">Sces Techniques</h3>
+                <h3 class="font-black text-lg text-slate-900 uppercase mb-2">Srv Techniques</h3>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Plomberie, Élec, Accès</p>
             </a>
 
-            <!-- Service GÉNÉRAUX (LIEN ACTIVÉ) -->
             <a href="{{ url_for('tickets.new_ticket', service_name='GEN') }}" class="card-service group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-300 cursor-pointer block">
                 <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
                     <i data-lucide="package" class="w-7 h-7"></i>
                 </div>
-                <h3 class="font-black text-lg text-slate-900 uppercase mb-2">Sces Généraux</h3>
+                <h3 class="font-black text-lg text-slate-900 uppercase mb-2">Srv Généraux</h3>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Fournitures, Mobilier</p>
             </a>
-
         </div>
 
-        <!-- Section MES TICKETS (Statique pour l'instant) -->
+        <!-- Section MES TICKETS (DYNAMIQUE) -->
         <div class="mt-16">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-black text-slate-900 uppercase tracking-tight">Mes dernières demandes</h2>
-                <a href="#" class="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wide">Voir tout l'historique</a>
+                <a href="{{ url_for('main.my_history') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wide">Voir tout l'historique</a>
             </div>
             
             <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -117,32 +107,43 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-medium">
-                        <!-- Exemple statique pour l'instant -->
+                        {% for ticket in tickets %}
                         <tr class="hover:bg-slate-50 transition">
-                            <td class="px-6 py-4 font-mono font-bold text-slate-700">20250524-001</td>
-                            <td class="px-6 py-4 font-bold text-slate-900">Demande PC Portable - Nouvel Arrivant</td>
-                            <td class="px-6 py-4"><span class="flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4 text-blue-500"></i> Info</span></td>
+                            <td class="px-6 py-4 font-mono font-bold text-slate-700">{{ ticket.uid_public }}</td>
+                            <td class="px-6 py-4 font-bold text-slate-900">{{ ticket.title }}</td>
                             <td class="px-6 py-4">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-yellow-100 text-yellow-700 border border-yellow-200">
-                                    En Validation
+                                <span class="flex items-center gap-2 text-xs font-bold">
+                                    {{ ticket.target_service.value }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 font-mono text-xs">24/05/2025</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest 
+                                    {% if 'VALIDATION' in ticket.status.value %}bg-yellow-100 text-yellow-700
+                                    {% elif 'COURS' in ticket.status.value %}bg-blue-100 text-blue-700
+                                    {% elif 'TERMINE' in ticket.status.value %}bg-emerald-100 text-emerald-700
+                                    {% else %}bg-slate-100 text-slate-500{% endif %}">
+                                    {{ ticket.status.value }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ ticket.created_at.strftime('%d/%m/%Y') }}</td>
                             <td class="px-6 py-4 text-right">
-                                <a href="{{ url_for('tickets.view_ticket', ticket_uid='20251229-001') }}" class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Voir</a>
+                                <a href="{{ url_for('tickets.view_ticket', ticket_uid=ticket.uid_public) }}" class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Voir</a>
                             </td>
                         </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-slate-400 italic font-bold">
+                                Vous n'avez pas encore fait de demande.
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
-                <div class="p-8 text-center text-slate-400 italic text-xs font-bold uppercase tracking-wide">
-                    (L'historique réel sera connecté à la BDD dans la prochaine étape)
-                </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Initialisation des icônes -->
     <script>
         lucide.createIcons();
     </script>

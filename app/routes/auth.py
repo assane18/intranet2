@@ -10,8 +10,12 @@ MOCK_USERS = {
     'user': {'fullname': 'Jean Utilisateur', 'role': UserRole.USER, 'department': None},
     'manager': {'fullname': 'Sophie Manager', 'role': UserRole.MANAGER, 'department': None},
     'admin': {'fullname': 'Admin Système', 'role': UserRole.ADMIN, 'department': None},
-    'tech_info': {'fullname': 'Salim Info', 'role': UserRole.SOLVER, 'department': ServiceType.INFO},
-    'tech_daf': {'fullname': 'Reda Compta', 'role': UserRole.SOLVER, 'department': ServiceType.DAF}
+    
+    # LES SERVICES QUI RECOIVENT DES BONS (SOLVERS)
+    'tech_info': {'fullname': 'Assane Info', 'role': UserRole.SOLVER, 'department': ServiceType.INFO},
+    'tech_daf': {'fullname': 'Reda Compta', 'role': UserRole.SOLVER, 'department': ServiceType.DAF},
+    'tech_batiment': {'fullname': 'Bob Technique', 'role': UserRole.SOLVER, 'department': ServiceType.TECH},
+    'tech_generaux': {'fullname': 'Marie SG', 'role': UserRole.SOLVER, 'department': ServiceType.GEN}
 }
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -22,7 +26,7 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         
-        # LOGIQUE MOCK SIMPLIFIÉE
+        # LOGIQUE MOCK (Simulation AD)
         if username in MOCK_USERS:
             user = User.query.filter_by(username=username).first()
             mock_data = MOCK_USERS[username]
@@ -30,7 +34,7 @@ def login():
             if not user:
                 user = User(username=username, email=f"{username}@local.test")
             
-            # Mise à jour des rôles pour être sûr
+            # Mise à jour forcée des rôles pour le test
             user.fullname = mock_data['fullname']
             user.role = mock_data['role']
             user.service_department = mock_data['department']
@@ -41,7 +45,7 @@ def login():
             login_user(user)
             return redirect_by_role(user)
         else:
-            flash("Utilisateur inconnu.", "danger")
+            flash("Utilisateur inconnu. Utilisez les boutons de test.", "danger")
 
     return render_template('auth/login.html')
 
@@ -53,15 +57,25 @@ def logout():
 
 def redirect_by_role(user):
     """
-    LOGIQUE DE REDIRECTION STRICTE :
-    - Techs/Admins -> Dashboard Technique (V1 style)
-    - Users/Managers -> Portail (Cartes)
+    AIGUILLAGE PRINCIPAL :
+    1. ADMIN / TECH (Solver) -> Dashboard de son service (Info, DAF...)
+    2. MANAGER -> Page de Validation
+    3. USER -> Portail de demandes
     """
     role = str(user.role).upper()
     
-    if 'SOLVER' in role or 'ADMIN' in role:
-        # Les techniciens vont sur leur Dashboard de gestion
+    if 'ADMIN' in role:
+        # L'admin est souvent aussi un Tech Info, on l'envoie sur le Dashboard
         return redirect(url_for('tickets.solver_dashboard'))
+    
+    elif 'SOLVER' in role:
+        # Les techniciens (DAF, Info, Tech...) vont sur leur Dashboard de gestion
+        return redirect(url_for('tickets.solver_dashboard'))
+    
+    elif 'MANAGER' in role:
+        # Les managers vont d'abord voir s'ils ont des trucs à valider
+        return redirect(url_for('tickets.manager_dashboard'))
+    
     else:
-        # Les utilisateurs et managers vont sur le Portail de demande
+        # Les utilisateurs lambda vont sur le portail pour faire une demande
         return redirect(url_for('main.user_portal'))
